@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 
+mod debug;
+
 const MAX: u16 = 2 << 14;
 
 fn main() {
@@ -26,11 +28,10 @@ fn main() {
 
     // Run program
     let mut ins_pointer = 0;
+    let mut debug_file = File::create("debug").unwrap();
     loop {
         let ins = get_value(memory[ins_pointer], &registers);
         let mut a = memory[ins_pointer + 1];
-        //dbg!(ins, ins_pointer, memory[ins_pointer], memory[ins_pointer+1], memory[ins_pointer+2], memory[ins_pointer+3]);
-        //dbg!(registers);
         match ins {
             // halt
             0 => break,
@@ -38,18 +39,24 @@ fn main() {
             1 => {
                 a = a - (MAX);
                 let b = get_value(memory[ins_pointer + 2], &registers);
+                //let mes = format!("ins {}: set {} {}", ins_pointer, a, b);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 registers[a as usize] = b;
                 ins_pointer += 3;
             }
             // push
             2 => {
                 a = get_value(a, &registers);
+                //let mes = format!("ins {}: push {}", ins_pointer, a);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 stack.push(a);
                 ins_pointer += 2;
             }
             // pop
             3 => {
                 let res = stack.pop().unwrap();
+                //let mes = format!("ins {}: pop {}", ins_pointer, a);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 2;
             }
@@ -58,6 +65,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = (b == c) as u16;
+                //let mes = format!("ins {}: eq {} {} {} res:{}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -66,14 +75,22 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = (b > c) as u16;
+                //let mes = format!("ins {}: gt {} {} {} res:{}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
             // jmp
-            6 => ins_pointer = a as usize,
+            6 => {
+                //let mes = format!("ins {}: jmp {}", ins_pointer, a);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
+                ins_pointer = a as usize;
+            }
             // jt
             7 => {
                 a = get_value(a, &registers);
+                //let mes = format!("ins {}: jt {}", ins_pointer, a);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 if a > 0 {
                     ins_pointer = memory[ins_pointer + 2] as usize;
                 } else {
@@ -83,6 +100,8 @@ fn main() {
             // jf
             8 => {
                 a = get_value(a, &registers);
+                //let mes = format!("ins {}: jf {}", ins_pointer, a);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 if a == 0 {
                     ins_pointer = memory[ins_pointer + 2] as usize;
                 } else {
@@ -94,6 +113,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = (b + c) % (MAX);
+                //let mes = format!("ins {}: add {} {} {} res: {}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -102,6 +123,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = (b as u32 * c as u32) % MAX as u32;
+                //let mes = format!("ins {}: mult {} {} {} res: {}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res as u16, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -110,6 +133,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = b % c;
+                //let mes = format!("ins {}: mod {} {} {} res: {}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -118,6 +143,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = b & c;
+                //let mes = format!("ins {}: and {} {} {} res: {}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -126,6 +153,8 @@ fn main() {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let c = get_value(memory[ins_pointer + 3], &registers);
                 let res = b | c;
+                //let mes = format!("ins {}: or {} {} {} res: {}", ins_pointer, a, b, c, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 4;
             }
@@ -133,6 +162,8 @@ fn main() {
             14 => {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let res = MAX - b - 1;
+                //let mes = format!("ins {}: not {} {}", ins_pointer, a, b);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 3;
             }
@@ -140,6 +171,8 @@ fn main() {
             15 => {
                 let b = get_value(memory[ins_pointer + 2], &registers);
                 let res = memory[b as usize];
+                //let mes = format!("ins {}: rmem {} {} res:{}", ins_pointer, a, b, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 set_value(res, a, &mut registers, &mut memory).unwrap();
                 ins_pointer += 3;
             }
@@ -147,12 +180,20 @@ fn main() {
             16 => {
                 a = get_value(a, &registers);
                 let b = get_value(memory[ins_pointer + 2], &registers);
+                //let mes = format!("ins {}: wmem {} {}", ins_pointer, a, b);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 memory[a as usize] = b;
                 ins_pointer += 3;
             }
             // call
             17 => {
-                stack.push((ins_pointer+2) as u16);
+                stack.push((ins_pointer + 2) as u16);
+                //let mes = format!(
+                    //"ins {}: call {}",
+                    //ins_pointer,
+                    //get_value(a, &registers) as usize
+                //);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 ins_pointer = get_value(a, &registers) as usize;
             }
             // ret
@@ -161,22 +202,27 @@ fn main() {
                     break;
                 }
                 let res = stack.pop().unwrap();
+                //let mes = format!("ins {}: ret {}", ins_pointer, res);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 ins_pointer = res as usize;
             }
             // out
             19 => {
                 a = get_value(a, &registers);
+                //let mes = format!("ins {}: out {}", ins_pointer, a as u8 as char);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
                 print!("{}", a as u8 as char);
-                ins_pointer += 2
+                ins_pointer += 2;
             }
             // in
             20 => {
+
                 if input_buffer_pos == input_buffer.len() {
                     let mut s = String::new();
                     io::stdin().read_line(&mut s).unwrap();
                     if s.starts_with('/') {
                         println!("Custom command detected");
-                        handle_custom_command(&s, &registers, &memory, &stack);
+                        debug::handle_custom_command(&s, &mut registers, &mut memory, &stack, &mut debug_file);
                         continue;
                     }
                     input_buffer = s.into_bytes();
@@ -184,11 +230,20 @@ fn main() {
                 }
                 let ch = input_buffer[input_buffer_pos];
                 set_value(ch.into(), a, &mut registers, &mut memory).unwrap();
-                input_buffer_pos+=1;
+                //let mes = format!("ins {}: in {} {}", ins_pointer, a, ch as char);
+                //debug::write_debug_message(mes, &registers, &mut debug_file);
+                input_buffer_pos += 1;
                 ins_pointer += 2;
             }
             // noop
-            21 => ins_pointer += 1,
+            21 => {
+               debug::write_debug_message(
+                    format!("ins {}: noop", ins_pointer),
+                    &registers,
+                    &mut debug_file,
+                );
+                ins_pointer += 1;
+            }
             _ => panic!("Unknown code provided"),
         }
     }
@@ -218,22 +273,4 @@ fn set_value(
     }
 
     return Ok(());
-}
-
-fn handle_custom_command(command: &str, registers: &[u16; 8], memory: &[u16; MAX as usize], stack: &Vec<u16>) {
-    match command {
-        "/showRegisters\n" => {
-            dbg!(registers);
-        }
-        "/showStack\n" => {
-            dbg!(stack);
-        }
-        "/dumpMemory\n" => {
-            let mut file = File::create("dump").unwrap();
-            for m in memory {
-                 file.write(&m.to_be_bytes()).unwrap();
-            }
-        }
-        _ => ()
-    }
 }

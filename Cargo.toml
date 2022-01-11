@@ -7,3 +7,7 @@ edition = "2018"
 
 [dependencies]
 bytes = "*"
+
+[[bin]]
+name = "ack"
+path = "src/ack.rs"
